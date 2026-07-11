@@ -1,5 +1,5 @@
 name: Apple WLOC 定位修改
-desc: "修改 Apple 网络定位返回坐标 | 快捷指令(推荐): 设置地理位置 https://www.icloud.com/shortcuts/a82717d8fdad4e6280866fcf911173f7 清理恢复位置 https://www.icloud.com/shortcuts/f42632d406504f24a2cd163af4fe012f | 选点页面: https://wloc-taqulalee.killer-100.workers.dev/"
+desc: "修改 Apple 网络定位返回坐标 | 快捷指令(推荐): 设置地理位置 https://www.icloud.com/shortcuts/e50b5de193354a1bade3f116c16d9b42 清理恢复位置 https://www.icloud.com/shortcuts/35c2bab34b724046bdfb82bcf7b5172e | 选点页面: https://wloc-taqulalee.killer-100.workers.dev/"
 author: Yu9191 Rewrite
 homepage: https://github.com/taqulalee/wloc
 icon: https://raw.githubusercontent.com/taqulalee/wloc/refs/heads/codex/self-hosted-hardening/wloc.jpg
