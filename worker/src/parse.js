@@ -11,6 +11,31 @@ export function safeDecode(s) {
   }
 }
 
+const ALLOWED_MAP_HOSTS = ["maps.apple.com", "map.apple.com", "amap.com", "gaode.com"];
+const MAX_INPUT_LENGTH = 2048;
+const MAX_RESPONSE_BYTES = 131072;
+
+function isAllowedMapHost(hostname) {
+  const host = String(hostname || "").toLowerCase().replace(/\.$/, "");
+  return ALLOWED_MAP_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+}
+
+function assertAllowedMapUrl(value) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("地图链接无效");
+  }
+  if (url.protocol !== "https:" || !isAllowedMapHost(url.hostname)) {
+    throw new Error("仅支持可信的苹果地图和高德地图 HTTPS 链接");
+  }
+  if (url.username || url.password || url.port) {
+    throw new Error("地图链接包含不允许的认证信息或端口");
+  }
+  return url;
+}
+
 // 从一段字符串里提取经纬度+名称。兼容:
 //  苹果地图 coordinate=/ll=/sll=纬度,经度  (名称在 name=...)
 //  高德 ?p=POIID,纬度,经度,名称,城市  (逗号或 %2C)
@@ -42,9 +67,11 @@ export function extractFromString(s) {
 export async function parseCoords(raw) {
   const text = String(raw || "").trim();
   if (!text) throw new Error("空输入");
+  if (text.length > MAX_INPUT_LENGTH) throw new Error("输入过长");
 
   const urlMatch = text.match(/https?:\/\/[^\s'"<>]+/i);
   let target = urlMatch ? urlMatch[0] : text;
+  if (urlMatch) target = assertAllowedMapUrl(target).toString();
 
   let hit = extractFromString(target);
   if (hit) return hit;
@@ -54,7 +81,8 @@ export async function parseCoords(raw) {
     for (let i = 0; i < 5; i++) {
       let resp;
       try {
-        resp = await fetch(cur, {
+        const safeUrl = assertAllowedMapUrl(cur);
+        resp = await fetch(safeUrl, {
           redirect: "manual",
           headers: {
             "user-agent":
@@ -62,6 +90,7 @@ export async function parseCoords(raw) {
             accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "accept-language": "zh-CN,zh-Hans;q=0.9",
           },
+          signal: AbortSignal.timeout(5000),
         });
       } catch (e) {
         break;
@@ -70,7 +99,7 @@ export async function parseCoords(raw) {
       if (loc) {
         hit = extractFromString(loc);
         if (hit) return hit;
-        cur = new URL(loc, cur).toString();
+        cur = assertAllowedMapUrl(new URL(loc, cur).toString()).toString();
         hit = extractFromString(cur);
         if (hit) return hit;
         continue;
@@ -78,7 +107,9 @@ export async function parseCoords(raw) {
       hit = extractFromString(resp.url);
       if (hit) return hit;
       try {
-        const body = await resp.text();
+        const contentLength = Number(resp.headers.get("content-length") || "0");
+        if (contentLength > MAX_RESPONSE_BYTES) throw new Error("地图响应过大");
+        const body = (await resp.text()).slice(0, MAX_RESPONSE_BYTES);
         hit = extractFromString(body);
         if (hit) return hit;
       } catch (e) {}
