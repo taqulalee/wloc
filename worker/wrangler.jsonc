@@ -1,6 +1,10 @@
 {
-  "name": "wloc-spoofer",
+  "name": "wloc-taqulalee",
   "main": "src/index.js",
-  "compatibility_date": "2024-01-01",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_date": "2026-07-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
 }
