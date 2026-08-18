@@ -9,8 +9,9 @@ http:
   mitm:
     - "gs-loc.apple.com"
     - "gs-loc-cn.apple.com"
+    - "gsp-ssl.ls.apple.com"
   script:
-    - match: ^https?:\/\/gs-loc(-cn)?\.apple\.com\/clls\/wloc
+    - match: ^https?:\/\/(?:gs-loc(?:-cn)?\.apple\.com|gsp-ssl\.ls\.apple\.com)\/clls\/wloc
       name: WLOC.Location
       type: response
       require-body: true
